@@ -1,6 +1,6 @@
 services:
   api:
-    container_name: chat-app-api
+    container_name: careflow-api
     build:
       context: .
     ports:
@@ -8,18 +8,27 @@ services:
     env_file:
       - .env
     depends_on:
-      - db
+      db:
+        condition: service_health
+
   db:
-    container_name: chat-app-db
+    container_name: careflow-db
     image: postgres:16
     environment:
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=root
-      - POSTGRES_DB=chat-app
+      - POSTGRES_DB=careflow
     ports:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d careflow"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
   pgAdmin:
     image: elestio/pgadmin
     restart: always
@@ -28,9 +37,7 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
-      # map the host port 8080 with the containers pgAdmin port
       - "8080:80"
-
 
 volumes:
   postgres-data:

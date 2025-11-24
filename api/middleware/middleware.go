@@ -2,10 +2,12 @@ package middleware
 
 import (
 	"context"
-	"github.com/YahiaJouini/chat-app-backend/pkg/auth"
-	"github.com/YahiaJouini/chat-app-backend/pkg/response"
+	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/YahiaJouini/chat-app-backend/pkg/auth"
+	"github.com/YahiaJouini/chat-app-backend/pkg/response"
 )
 
 type contextKey string
@@ -15,8 +17,10 @@ const UserClaimsKey contextKey = "userClaims"
 type role string
 
 const (
-	User  role = "user"
-	Admin role = "admin"
+	Patient role = "patient"
+	Doctor  role = "doctor"
+	Admin   role = "admin"
+	All     role = "all"
 )
 
 func AuthMiddleware(requiredRole role) func(http.Handler) http.Handler {
@@ -35,13 +39,15 @@ func AuthMiddleware(requiredRole role) func(http.Handler) http.Handler {
 			}
 
 			claims, err := auth.VerifyToken(string(tokenParts[1]), auth.AccessToken)
+
+			fmt.Println("Claims:", claims)
 			if err != nil {
 				auth.Logout(w)
 				response.Unauthorized(w, "Invalid or expired token")
 				return
 			}
 
-			if claims.Role != string(requiredRole) {
+			if claims.Role != string(requiredRole) && requiredRole != All {
 				auth.Logout(w)
 				response.Unauthorized(w, "Insufficient permissions")
 				return

@@ -1,9 +1,10 @@
 package routes
 
 import (
+	"net/http"
+
 	"github.com/YahiaJouini/chat-app-backend/api/middleware"
 	"github.com/gorilla/mux"
-	"net/http"
 )
 
 func InitializeRoutes() *mux.Router {
@@ -13,9 +14,9 @@ func InitializeRoutes() *mux.Router {
 	authRouter := router.PathPrefix("/auth").Subrouter()
 	// user router
 	userRouter := router.PathPrefix("/user").Subrouter()
-	userRouter.Use(middleware.AuthMiddleware("user"))
+	userRouter.Use(middleware.AuthMiddleware(middleware.All))
 
-	//init routers
+	// init routers
 	InitAuthRoutes(authRouter)
 	InitUserRoutes(userRouter)
 	return router
