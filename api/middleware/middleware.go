@@ -59,14 +59,3 @@ func AuthMiddleware(requiredRole role) func(http.Handler) http.Handler {
 		})
 	}
 }
-
-func SetReturnTokenMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if val := r.URL.Query().Get("return-token"); val != "" {
-			response.Error(w, http.StatusBadRequest, "Cannot set return-token manually")
-			return
-		}
-		ctx := context.WithValue(r.Context(), "return-token", true)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}

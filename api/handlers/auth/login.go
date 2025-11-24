@@ -37,14 +37,14 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !user.Verified {
-		response.Error(w, http.StatusForbidden, "User not verified yet")
-		return
-	}
-
 	ok := auth.VerifyPassword(body.Password, user.Password)
 	if !ok {
 		response.Error(w, http.StatusNotFound, "Invalid credentials")
+		return
+	}
+
+	if !user.Verified {
+		response.Error(w, http.StatusForbidden, "User not verified yet")
 		return
 	}
 
@@ -53,13 +53,9 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	userAgent := r.Header.Get("User-Agent")
 
-	if strings.Contains(userAgent, "Android") || strings.Contains(userAgent, "CareFlow") {
+	if strings.Contains(userAgent, "Android") {
 
-		mobileData := struct {
-			AccessToken  string      `json:"accessToken"`
-			RefreshToken string      `json:"refreshToken"`
-			User         interface{} `json:"user"`
-		}{
+		mobileData := auth.MobileAuthResponse{
 			AccessToken:  accessToken,
 			RefreshToken: refreshToken,
 			User:         user,

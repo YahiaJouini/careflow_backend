@@ -9,6 +9,12 @@ const (
 	Add    CookieMode = "add"
 )
 
+type MobileAuthResponse struct {
+	AccessToken  string      `json:"accessToken"`
+	RefreshToken string      `json:"refreshToken"`
+	User         interface{} `json:"user"`
+}
+
 func SetAuthCookie(w http.ResponseWriter, value string, mode CookieMode) {
 	cookie := &http.Cookie{
 		Name:     "auth_token",

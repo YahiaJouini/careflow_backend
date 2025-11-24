@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/YahiaJouini/chat-app-backend/internal/db/queries"
@@ -62,24 +63,26 @@ func ValidateCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	returnTokenValue := r.Context().Value("return-token")
-	returnToken := false
-	if returnTokenValue != nil {
-		if boolValue, ok := returnTokenValue.(bool); ok && boolValue {
-			returnToken = true
-		}
-	}
+	userAgent := r.Header.Get("User-Agent")
 
-	if returnToken {
-		refreshToken := auth.GenerateToken(user, auth.RefreshToken)
-		accessToken := auth.GenerateToken(user, auth.AccessToken)
-		// assign cookies
-		auth.SetAuthCookie(w, refreshToken, auth.Add)
-		response.Success(w, accessToken, "Email verified successfully")
+	refreshToken := auth.GenerateToken(user, auth.RefreshToken)
+	accessToken := auth.GenerateToken(user, auth.AccessToken)
+
+	if strings.Contains(userAgent, "Android") || strings.Contains(userAgent, "CareFlow") {
+
+		mobileData := auth.MobileAuthResponse{
+			AccessToken:  accessToken,
+			RefreshToken: refreshToken,
+			User:         user,
+		}
+
+		response.Success(w, mobileData, "Login successful")
 		return
 	}
 
-	response.Success(w, nil, "Email verified successfully")
+	// assign cookies
+	auth.SetAuthCookie(w, refreshToken, auth.Add)
+	response.Success(w, accessToken, "Login successful")
 }
 
 func ResendCode(w http.ResponseWriter, r *http.Request) {

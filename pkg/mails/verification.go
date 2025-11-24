@@ -40,7 +40,7 @@ func SendMail(sendTo string, code string) Result {
 	// get html
 	var body bytes.Buffer
 	currentDir, _ := os.Getwd()
-	templatePath := filepath.Join(currentDir, "pkg", "email", "verification.html")
+	templatePath := filepath.Join(currentDir, "pkg", "mails", "verification.html")
 
 	tmpl, err := template.New("verification.html").ParseFiles(templatePath)
 	if err != nil {
