@@ -3,12 +3,13 @@ package auth
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/YahiaJouini/chat-app-backend/internal/db/queries"
-	"github.com/YahiaJouini/chat-app-backend/pkg/auth"
-	"github.com/YahiaJouini/chat-app-backend/pkg/email"
-	"github.com/YahiaJouini/chat-app-backend/pkg/response"
 	"net/http"
 	"time"
+
+	"github.com/YahiaJouini/chat-app-backend/internal/db/queries"
+	"github.com/YahiaJouini/chat-app-backend/pkg/auth"
+	"github.com/YahiaJouini/chat-app-backend/pkg/mails"
+	"github.com/YahiaJouini/chat-app-backend/pkg/response"
 )
 
 type ValidateCodeReq struct {
@@ -109,11 +110,10 @@ func ResendCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := email.SendMail(body.Email, code); result.Err != nil {
+	if result := mails.SendMail(body.Email, code); result.Err != nil {
 		response.ServerError(w, "An error occured sending your verification code")
 		return
 	}
 
 	response.Success(w, nil, "New verification code sent")
-
 }

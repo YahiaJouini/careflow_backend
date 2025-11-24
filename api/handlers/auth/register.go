@@ -2,20 +2,21 @@ package auth
 
 import (
 	"encoding/json"
+	"net/http"
+	"time"
+
 	"github.com/YahiaJouini/chat-app-backend/internal/db"
 	"github.com/YahiaJouini/chat-app-backend/internal/db/models"
 	"github.com/YahiaJouini/chat-app-backend/pkg/auth"
-	"github.com/YahiaJouini/chat-app-backend/pkg/email"
+	"github.com/YahiaJouini/chat-app-backend/pkg/mails"
 	"github.com/YahiaJouini/chat-app-backend/pkg/response"
-	"net/http"
-	"time"
 )
 
 type RegisterBody struct {
 	FirstName string `json:"firstName" validate:"required,min=3,max=30"`
 	LastName  string `json:"lastName" validate:"required,min=3,max=30"`
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=6"`
+	Email     string `json:"email" validate:"required,email"`
+	Password  string `json:"password" validate:"required,min=6"`
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +42,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		response.ServerError(w)
 		return
 	}
-	verificationCode, err := email.GenerateVerificationCode()
+	verificationCode, err := mails.GenerateVerificationCode()
 	if err != nil {
 		response.ServerError(w)
 		return
@@ -57,7 +58,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		CodeExpirationTime: expiresAt,
 	}
 
-	if result := email.SendMail(body.Email, verificationCode); result.Err != nil {
+	if result := mails.SendMail(body.Email, verificationCode); result.Err != nil {
 		response.ServerError(w, "An error occured sending your verification code")
 		return
 	}

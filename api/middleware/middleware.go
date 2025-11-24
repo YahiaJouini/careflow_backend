@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -39,8 +38,6 @@ func AuthMiddleware(requiredRole role) func(http.Handler) http.Handler {
 			}
 
 			claims, err := auth.VerifyToken(string(tokenParts[1]), auth.AccessToken)
-
-			fmt.Println("Claims:", claims)
 			if err != nil {
 				auth.Logout(w)
 				response.Unauthorized(w, "Invalid or expired token")

@@ -7,4 +7,5 @@ import (
 
 func InitUserRoutes(router *mux.Router) {
 	router.HandleFunc("", user.GetUser).Methods("GET")
+	router.HandleFunc("", user.UpdateUser).Methods("PUT")
 }

@@ -9,7 +9,7 @@ services:
       - .env
     depends_on:
       db:
-        condition: service_health
+        condition: service_healthy
 
   db:
     container_name: careflow-db

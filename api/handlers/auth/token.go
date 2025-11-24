@@ -1,10 +1,11 @@
 package auth
 
 import (
+	"net/http"
+
 	"github.com/YahiaJouini/chat-app-backend/internal/db/queries"
 	"github.com/YahiaJouini/chat-app-backend/pkg/auth"
 	"github.com/YahiaJouini/chat-app-backend/pkg/response"
-	"net/http"
 )
 
 func RefreshToken(w http.ResponseWriter, r *http.Request) {
@@ -19,7 +20,7 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 		response.Unauthorized(w, err.Error())
 		return
 	}
-	user, err := queries.GetUserByEmail(claims.Email)
+	user, err := queries.GetUserByID(claims.UserID)
 	if err != nil {
 		response.Unauthorized(w, err.Error())
 		return
@@ -33,5 +34,4 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 
 	accessToken := auth.GenerateToken(user, auth.AccessToken)
 	response.Success(w, accessToken, "Access token refreshed successfully")
-
 }

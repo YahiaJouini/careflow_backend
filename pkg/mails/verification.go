@@ -1,15 +1,16 @@
-package email
+package mails
 
 import (
 	"bytes"
 	"crypto/rand"
 	"fmt"
-	"github.com/YahiaJouini/chat-app-backend/internal/config"
-	"gopkg.in/gomail.v2"
 	"html/template"
 	"math/big"
 	"os"
 	"path/filepath"
+
+	"github.com/YahiaJouini/chat-app-backend/internal/config"
+	"gopkg.in/gomail.v2"
 )
 
 // GenerateVerificationCode Generate a random 6-digit verification code

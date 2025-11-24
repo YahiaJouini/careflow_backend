@@ -1,8 +1,9 @@
 package models
 
 import (
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type User struct {
@@ -10,7 +11,7 @@ type User struct {
 	FirstName          string         `gorm:"type:varchar(100); not null" json:"firstName"`
 	LastName           string         `gorm:"type:varchar(100); not null" json:"lastName"`
 	Email              string         `gorm:"type:varchar(255); not null; unique" json:"email"`
-	Image              string         `gorm:"type:varchar(255); default:./default-user-image.svg" json:"image"`
+	Image              string         `gorm:"type:varchar(255); default:https://avatar.iran.liara.run/public" json:"image"`
 	Password           string         `gorm:"type:varchar(255)" json:"-"`
 	Verified           bool           `gorm:"type:boolean; default:false"`
 	Role               string         `gorm:"type:varchar(255); not null; default:'patient'; check(role IN ('admin', 'doctor'))" json:"role"`
