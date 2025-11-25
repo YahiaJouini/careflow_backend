@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -11,7 +12,7 @@ import (
 )
 
 type RefreshTokenRequest struct {
-	RefreshToken string `json:"refresh_token"`
+	RefreshToken string `json:"refreshToken"`
 }
 
 func RefreshToken(w http.ResponseWriter, r *http.Request) {
@@ -28,6 +29,8 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, http.StatusBadRequest, "Invalid request body")
 			return
 		}
+
+		fmt.Println("Token : ", body.RefreshToken)
 		currentRefreshToken = body.RefreshToken
 	} else {
 		currentRefreshToken, err = auth.GetRefreshToken(r)
