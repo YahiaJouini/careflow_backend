@@ -17,6 +17,19 @@ type ValidateAppointmentRequest struct {
 	Status string `json:"status"` // "confirmed" or "completed"
 }
 
+type PatientDetailsResponse struct {
+	FirstName         string   `json:"firstName"`
+	LastName          string   `json:"lastName"`
+	Email             string   `json:"email"`
+	Image             string   `json:"image"`
+	Height            float64  `json:"height"`
+	Weight            float64  `json:"weight"`
+	BloodType         string   `json:"bloodType"`
+	ChronicConditions []string `json:"chronicConditions"`
+	Allergies         []string `json:"allergies"`
+	Medications       []string `json:"medications"`
+}
+
 func getDoctorID(userID uint) (uint, error) {
 	var doctor models.Doctor
 	if err := db.Db.Where("user_id = ?", userID).First(&doctor).Error; err != nil {
@@ -115,4 +128,23 @@ func GetDoctorPatients(userID uint) ([]models.User, error) {
 		Find(&patients).Error
 
 	return patients, err
+}
+
+func GetDoctorPatientDetails(doctorUserID, patientUserID uint) (*models.Patient, error) {
+	doctorID, err := getDoctorID(doctorUserID)
+	if err != nil {
+		return nil, err
+	}
+
+	var patient models.Patient
+	err = db.Db.Preload("User").
+		Joins("JOIN appointments ON appointments.patient_id = patients.user_id").
+		Where("appointments.doctor_id = ? AND patients.user_id = ?", doctorID, patientUserID).
+		First(&patient).Error
+
+	if err != nil {
+		return nil, errors.New("patient not found or not associated with this doctor")
+	}
+
+	return &patient, nil
 }

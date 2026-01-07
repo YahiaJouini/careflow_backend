@@ -16,4 +16,5 @@ func InitDoctorRoutes(router *mux.Router) {
 
 	// patients routes
 	router.HandleFunc("/patients", doctor.GetPatients).Methods("GET")
+	router.HandleFunc("/patients/{id}", doctor.GetPatientDetails).Methods("GET")
 }
