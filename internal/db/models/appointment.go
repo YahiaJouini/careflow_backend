@@ -22,12 +22,12 @@ type Appointment struct {
 	DoctorID uint   `gorm:"not null" json:"doctorId"`
 	Doctor   Doctor `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"doctor,omitempty"`
 
-	AppointmentDate time.Time `gorm:"not null" json:"appointmentDate"` // Specific date and time
+	AppointmentDate time.Time `gorm:"not null" json:"appointmentDate"`
 	Reason          string    `gorm:"type:text" json:"reason"`
 	Status          string    `gorm:"type:varchar(20);default:'pending';check(status IN ('pending', 'confirmed', 'cancelled', 'completed'))" json:"status"`
 
-	// Notes added by doctor after/during consult
-	DoctorNotes string `gorm:"type:text" json:"doctorNotes"`
+	DoctorNotes string   `gorm:"type:text" json:"doctorNotes"`
+	Medications []string `gorm:"type:jsonb" json:"medications"`
 
 	CreatedAt time.Time      `json:"createdAt"`
 	UpdatedAt time.Time      `json:"-"`

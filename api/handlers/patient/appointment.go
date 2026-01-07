@@ -75,3 +75,29 @@ func CancelAppointment(w http.ResponseWriter, r *http.Request) {
 
 	response.Success(w, nil, "Appointment cancelled successfully")
 }
+
+func GetMedicalHistory(w http.ResponseWriter, r *http.Request) {
+	claims, _ := r.Context().Value(middleware.UserClaimsKey).(*auth.Claims)
+
+	data, err := queries.GetMedicalHistory(claims.UserID)
+	if err != nil {
+		response.ServerError(w, "Failed to retrieve medical history")
+		return
+	}
+
+	response.Success(w, data, "Medical history retrieved successfully")
+}
+
+func DeleteAppointment(w http.ResponseWriter, r *http.Request) {
+	claims, _ := r.Context().Value(middleware.UserClaimsKey).(*auth.Claims)
+	vars := mux.Vars(r)
+	id, _ := strconv.Atoi(vars["id"])
+
+	err := queries.DeleteAppointment(uint(id), claims.UserID)
+	if err != nil {
+		response.Error(w, http.StatusNotFound, "Appointment not found or unauthorized")
+		return
+	}
+
+	response.Success(w, nil, "Appointment deleted successfully")
+}
