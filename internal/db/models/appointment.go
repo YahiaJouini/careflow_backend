@@ -27,7 +27,7 @@ type Appointment struct {
 	Status          string    `gorm:"type:varchar(20);default:'pending';check(status IN ('pending', 'confirmed', 'cancelled', 'completed'))" json:"status"`
 
 	DoctorNotes string   `gorm:"type:text" json:"doctorNotes"`
-	Medications []string `gorm:"type:jsonb" json:"medications"`
+	Medications []string `gorm:"type:jsonb;serializer:json" json:"medications"`
 
 	CreatedAt time.Time      `json:"createdAt"`
 	UpdatedAt time.Time      `json:"-"`

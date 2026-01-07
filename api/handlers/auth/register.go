@@ -20,23 +20,29 @@ type RegisterBody struct {
 	LastName  string `json:"lastName" validate:"required,min=3,max=30"`
 	Email     string `json:"email" validate:"required,email"`
 	Password  string `json:"password" validate:"required,min=6"`
+	Role      string `json:"role" validate:"omitempty,oneof=patient doctor"`
 
-	Role          string  `json:"role" validate:"omitempty,oneof=patient doctor"`
-	SpecialtyID   *uint   `json:"specialtyId"`   // required only if doctor
-	LicenseNumber *string `json:"licenseNumber"` // required only if doctor
+	// Doctor-specific fields
+	SpecialtyID   *uint   `json:"specialtyId"`
+	LicenseNumber *string `json:"licenseNumber"`
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {
 	var body RegisterBody
-
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		response.Error(w, http.StatusBadRequest, err.Error())
 		return
 	}
+
 	// validate req body
 	if err := utils.Validate.Struct(body); err != nil {
 		response.Error(w, 0, err.Error())
 		return
+	}
+
+	// default to patient if empty or invalid
+	if body.Role == "" {
+		body.Role = "patient"
 	}
 
 	if body.Role == "doctor" {
@@ -44,9 +50,6 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, http.StatusBadRequest, "Doctors must provide a SpecialtyID and LicenseNumber")
 			return
 		}
-	} else {
-		// default to patient if empty or invalid
-		body.Role = "patient"
 	}
 
 	var existingUser models.User
@@ -60,6 +63,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		response.ServerError(w)
 		return
 	}
+
 	verificationCode, err := mails.GenerateVerificationCode()
 	if err != nil {
 		response.ServerError(w)
@@ -92,6 +96,13 @@ func Register(w http.ResponseWriter, r *http.Request) {
 				LicenseNumber: *body.LicenseNumber,
 			}
 			if err := queries.CreateDoctor(tx, &doctor); err != nil {
+				return err
+			}
+		} else if body.Role == "patient" {
+			patient := models.Patient{
+				UserID: user.ID,
+			}
+			if err := queries.CreatePatient(tx, &patient); err != nil {
 				return err
 			}
 		}

@@ -117,10 +117,14 @@ func CreateUser(db *gorm.DB, user *models.User) error {
 	return result.Error
 }
 
-// always use this in a transaction !!
+// always use these in a transaction !!
 func CreateDoctor(db *gorm.DB, doctor *models.Doctor) error {
 	result := db.Create(doctor)
 	return result.Error
+}
+
+func CreatePatient(tx *gorm.DB, patient *models.Patient) error {
+	return tx.Create(patient).Error
 }
 
 func MarkAsVerified(email string) error {

@@ -13,6 +13,7 @@ func Migrate() {
 		&models.Specialty{},
 		&models.Doctor{},
 		&models.Appointment{},
+		&models.Patient{},
 	)
 	if err != nil {
 		log.Fatal("Migration failed:", err)

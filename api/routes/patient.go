@@ -12,7 +12,7 @@ func InitPatientRoutes(router *mux.Router) {
 	router.HandleFunc("/appointments", patient.GetAppointments).Methods("GET")
 	router.HandleFunc("/appointments", patient.CreateAppointment).Methods("POST")
 	router.HandleFunc("/appointments/history", patient.GetMedicalHistory).Methods("GET")
-	router.HandleFunc("/appointments/{id}", patient.UpdateAppointment).Methods("PUT")
+	router.HandleFunc("/appointments/{id}", patient.UpdateAppointment).Methods("PATCH")
 	router.HandleFunc("/appointments/{id}", patient.CancelAppointment).Methods("PUT")
 	router.HandleFunc("/appointments/{id}", patient.DeleteAppointment).Methods("DELETE")
 }

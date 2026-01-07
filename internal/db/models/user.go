@@ -17,6 +17,7 @@ type User struct {
 	Role      string `gorm:"type:varchar(255); not null; default:'patient'; check(role IN ('admin', 'doctor','patient'))" json:"role"`
 
 	Doctor             *Doctor        `json:"doctor,omitempty" gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Patient            *Patient       `json:"patient,omitempty" gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	VerificationCode   string         `gorm:"type:varchar(6)" json:"-"`
 	CodeExpirationTime time.Time      `gorm:"type:timestamp; not null" json:"-"`
 	CreatedAt          time.Time      `json:"createdAt"`
