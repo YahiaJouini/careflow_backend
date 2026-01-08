@@ -27,7 +27,7 @@ func GetUserByEmail(email string) (*models.User, error) {
 
 	result := db.Db.Take(&user, "email = ?", email)
 	if result.Error != nil {
-		return nil, errors.New("user not found")
+		return nil, result.Error
 	}
 
 	return &user, nil

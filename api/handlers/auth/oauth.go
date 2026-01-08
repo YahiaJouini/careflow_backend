@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"strings"
@@ -81,6 +82,13 @@ func GoogleLogin(w http.ResponseWriter, r *http.Request) {
 
 	user, err := queries.GetUserByEmail(userInfo.Email)
 	if err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			// Database error other than "not found"
+			response.ServerError(w, "Database error: "+err.Error())
+			return
+		}
+
+		// User not found, create new user
 		newUser := models.User{
 			FirstName: userInfo.GivenName,
 			LastName:  userInfo.FamilyName,
@@ -108,6 +116,7 @@ func GoogleLogin(w http.ResponseWriter, r *http.Request) {
 		}
 		user = &newUser
 	} else {
+		// User exists, update profile picture
 		updateUserBody := queries.UpdateUserBody{
 			Image: &userInfo.Picture,
 		}
