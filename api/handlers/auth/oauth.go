@@ -1,30 +1,61 @@
 package auth
 
 import (
-	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"strings"
 
-	"github.com/YahiaJouini/careflow/internal/config"
 	"github.com/YahiaJouini/careflow/internal/db"
 	"github.com/YahiaJouini/careflow/internal/db/models"
 	"github.com/YahiaJouini/careflow/internal/db/queries"
 	"github.com/YahiaJouini/careflow/pkg/auth"
 	"github.com/YahiaJouini/careflow/pkg/response"
-	"google.golang.org/api/idtoken"
+	"gorm.io/gorm"
 )
 
 type GoogleLoginBody struct {
-	IDToken string `json:"idToken" validate:"required"`
+	AccessToken string `json:"accessToken" validate:"required"`
+}
+
+type GoogleUserInfo struct {
+	ID            string `json:"id"`
+	Email         string `json:"email"`
+	VerifiedEmail bool   `json:"verified_email"`
+	Name          string `json:"name"`
+	GivenName     string `json:"given_name"`
+	FamilyName    string `json:"family_name"`
+	Picture       string `json:"picture"`
+}
+
+func fetchGoogleUserInfo(accessToken string) (*GoogleUserInfo, error) {
+	req, err := http.NewRequest("GET", "https://www.googleapis.com/oauth2/v2/userinfo", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var userInfo GoogleUserInfo
+	if err := json.Unmarshal(body, &userInfo); err != nil {
+		return nil, err
+	}
+
+	return &userInfo, nil
 }
 
 func GoogleLogin(w http.ResponseWriter, r *http.Request) {
-	GoogleClientID, clientId_error := config.GetEnv("GOOGLE_CLIENT_ID")
-	if clientId_error != nil {
-		response.ServerError(w, "Google Client ID not configured")
-		return
-	}
 	var body GoogleLoginBody
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -32,47 +63,58 @@ func GoogleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payload, err := idtoken.Validate(context.Background(), body.IDToken, GoogleClientID)
+	userInfo, err := fetchGoogleUserInfo(body.AccessToken)
 	if err != nil {
-		response.Error(w, http.StatusUnauthorized, "Invalid Google Token: "+err.Error())
+		response.Error(w, http.StatusUnauthorized, "Failed to fetch Google user info: "+err.Error())
 		return
 	}
 
-	email := payload.Claims["email"].(string)
-	emailVerified := payload.Claims["email_verified"].(bool)
-	firstName := payload.Claims["given_name"].(string)
-	lastName := payload.Claims["family_name"].(string)
-	picture := payload.Claims["picture"].(string)
+	if userInfo.Email == "" {
+		response.Error(w, http.StatusUnauthorized, "No email received from Google")
+		return
+	}
 
-	if !emailVerified {
+	if !userInfo.VerifiedEmail {
 		response.Error(w, http.StatusForbidden, "Google email not verified")
 		return
 	}
 
-	user, err := queries.GetUserByEmail(email)
+	user, err := queries.GetUserByEmail(userInfo.Email)
 	if err != nil {
 		newUser := models.User{
-			FirstName: firstName,
-			LastName:  lastName,
-			Email:     email,
-			Image:     picture,
+			FirstName: userInfo.GivenName,
+			LastName:  userInfo.FamilyName,
+			Email:     userInfo.Email,
+			Image:     userInfo.Picture,
 			Verified:  true,
 			Role:      "patient",
 		}
 
-		if err := queries.CreateUser(db.Db, &newUser); err != nil {
-			response.ServerError(w, "Could not create user: "+err.Error())
+		txErr := db.Db.Transaction(func(tx *gorm.DB) error {
+			if err := queries.CreateUser(tx, &newUser); err != nil {
+				return err
+			}
+			patient := models.Patient{
+				UserID: newUser.ID,
+			}
+			if err := queries.CreatePatient(tx, &patient); err != nil {
+				return err
+			}
+			return nil
+		})
+		if txErr != nil {
+			response.ServerError(w, "Could not create user: "+txErr.Error())
 			return
 		}
 		user = &newUser
 	} else {
 		updateUserBody := queries.UpdateUserBody{
-			Image: &picture,
+			Image: &userInfo.Picture,
 		}
 		queries.UpdateUser(user.ID, updateUserBody)
 	}
 
-	// same as login
+
 	refreshToken := auth.GenerateToken(user, auth.RefreshToken)
 	accessToken := auth.GenerateToken(user, auth.AccessToken)
 
